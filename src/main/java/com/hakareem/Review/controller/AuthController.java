@@ -3,6 +3,8 @@ package com.hakareem.Review.controller;
 import com.hakareem.Review.domain.User;
 import com.hakareem.Review.dto.AuthCredentialsRequest;
 import com.hakareem.Review.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,13 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
     @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JwtUtil jwtUtil;
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+    }
 
     @PostMapping("login")
-    public ResponseEntity<?> login (@RequestBody AuthCredentialsRequest request) {
+    public ResponseEntity<?> login(@RequestBody AuthCredentialsRequest request) {
         try {
             Authentication authenticate = authenticationManager
                     .authenticate(
@@ -37,6 +45,7 @@ public class AuthController {
 
             User user = (User) authenticate.getPrincipal();
             user.setPassword(null);
+            logger.info("User {} authenticated successfully", user.getUsername());
             return ResponseEntity.ok()
                     .header(
                             HttpHeaders.AUTHORIZATION,
@@ -44,6 +53,7 @@ public class AuthController {
                     )
                     .body(user);
         } catch (BadCredentialsException ex) {
+            logger.error("Authentication failed for user {}", request.getUsername(), ex);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

@@ -30,14 +30,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(userDetailsService).passwordEncoder(customPasswordEncoder.getPasswordEncoder());
     }
 
-    @Override @Bean
+    @Override
+    @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
 
+    /**
+     * Configures the HttpSecurity for the application.
+     */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-       http = http.cors().disable().csrf().disable();
+        http = http.cors().disable().csrf().disable();
 
         // Set session management to stateless
         http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();

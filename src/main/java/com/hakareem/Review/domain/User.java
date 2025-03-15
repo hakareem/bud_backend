@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,7 +25,11 @@ public class User implements UserDetails {
     private Long id;
     private LocalDate cohortStartDate;
     private String username;
+    @JsonIgnore
     private String password;
+    @OneToMany(fetch = FetchType.EAGER ,mappedBy = "user")
+    @JsonIgnore
+    private List<Authority> authorities = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -2,6 +2,7 @@ package com.hakareem.Review.controller;
 
 import com.hakareem.Review.domain.User;
 import com.hakareem.Review.dto.AuthCredentialsRequest;
+import com.hakareem.Review.service.UserDetailServiceImpl;
 import com.hakareem.Review.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,11 +28,16 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    @Autowired
+    private final UserDetailServiceImpl userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserDetailServiceImpl userService, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("login")
@@ -56,5 +63,21 @@ public class AuthController {
             logger.error("Authentication failed for user {}", request.getUsername(), ex);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @PostMapping("register")
+    public ResponseEntity<?> register(@RequestBody AuthCredentialsRequest request) {
+        if (userService.existsByUsername(request.getUsername())) {
+            logger.error("Username {} is already taken", request.getUsername());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username is already taken");
+        }
+
+        User newUser = new User();
+        newUser.setUsername(request.getUsername());
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        userService.save(newUser);
+
+        logger.info("User {} registered successfully", newUser.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 }

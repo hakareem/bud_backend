@@ -14,10 +14,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -80,4 +83,14 @@ public class AuthController {
         logger.info("User {} registered successfully", newUser.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateToken(@RequestParam String token, @AuthenticationPrincipal User user) {
+        try {
+            return ResponseEntity.ok(jwtUtil.validateToken(token, user));
+        } catch (Exception ex) {
+            logger.error("Token validation failed", ex);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }        
 }

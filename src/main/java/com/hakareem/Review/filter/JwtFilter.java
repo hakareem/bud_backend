@@ -42,9 +42,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
         final String token = extractToken(header);
 
+        if (token == null || token.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         UserDetails userDetails = getUserDetails(token);
 
-        if (!jwtTokenUtil.validateToken(token, userDetails)) {
+        if (userDetails == null || !jwtTokenUtil.validateToken(token, userDetails)) {
             chain.doFilter(request, response);
             return;
         }
@@ -58,11 +63,12 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private String extractToken(String header) {
-        return header.split(" ")[1].trim();
+        return header.substring(7).trim(); // Remove "Bearer " prefix
     }
 
     private UserDetails getUserDetails(String token) {
-        return userRepo.findByUsername(jwtTokenUtil.getUsernameFromToken(token)).orElse(null);
+        String username = jwtTokenUtil.getUsernameFromToken(token);
+        return userRepo.findByUsername(username).orElse(null);
     }
 
     private void setAuthenticationContext(UserDetails userDetails, HttpServletRequest request) {

@@ -84,13 +84,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
-    @GetMapping("/validate")
+    @GetMapping("validate")
     public ResponseEntity<?> validateToken(@RequestParam String token, @AuthenticationPrincipal User user) {
         try {
-            return ResponseEntity.ok(jwtUtil.validateToken(token, user));
+            boolean isValid = jwtUtil.validateToken(token, user);
+            return ResponseEntity.ok(isValid);
         } catch (Exception ex) {
             logger.error("Token validation failed", ex);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
     }        
 }
